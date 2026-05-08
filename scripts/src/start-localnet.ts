@@ -28,7 +28,7 @@ const CUSTOM_APP_SYNCHRONIZER_SC = path.join(
     'scripts/localnet/app-synchronizer.sc'
 )
 const LOCALNET_DARS_DIR = path.join(rootDir, '.localnet/dars')
-
+// TODO (#1721): make multi-sync the default and remove the flag once multi-sync is fully supported and tested in the main scripts e2e tests, but for now we want to keep it as an option to avoid accidentally running multi-sync e2e tests without updating the main scripts e2e tests to cover multi-sync as well
 function ensureComposeOverride() {
     fs.mkdirSync(path.dirname(GENERATED_COMPOSE_OVERRIDE), { recursive: true })
     const lines = [
@@ -52,6 +52,7 @@ function ensureComposeOverride() {
     fs.writeFileSync(GENERATED_COMPOSE_OVERRIDE, lines.join('\n'), 'utf8')
 }
 
+// TODO (#1721): make multi-sync the default and remove the flag once multi-sync is fully supported and tested in the main scripts e2e tests, but for now we want to keep it as an option to avoid accidentally running multi-sync e2e tests without updating the main scripts e2e tests to cover multi-sync as well
 const composeBase = [
     'docker',
     'compose',
