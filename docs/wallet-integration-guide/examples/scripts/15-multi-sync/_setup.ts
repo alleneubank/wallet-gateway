@@ -17,7 +17,7 @@ import type { GenerateTransactionResponse } from '@canton-network/core-ledger-cl
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
-    resolvePreferredSynchronizerId,
+    resolveGlobalSynchronizerId,
     vetDar,
     createScanProxyClient,
 } from '../utils/index.js'
@@ -104,8 +104,7 @@ export async function setupMultiSyncTrade(
             `Expected at least 2 connected synchronizers (global + app), found ${allSynchronizers.length}`
         )
 
-    const globalSynchronizerId =
-        resolvePreferredSynchronizerId(allSynchronizers)
+    const globalSynchronizerId = resolveGlobalSynchronizerId(allSynchronizers)
     const appSynchronizerId = allSynchronizers.find(
         (s) => s.synchronizerAlias === 'app-synchronizer'
     )?.synchronizerId

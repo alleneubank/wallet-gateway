@@ -1,37 +1,15 @@
+// Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 import type { SDKInterface } from '@canton-network/wallet-sdk'
 import type { Logger } from 'pino'
+import type { SynchronizerMap } from '@canton-network/wallet-sdk'
 
-/**
- * Pick the preferred synchronizer ID from the list returned by the ledger API.
- *
- * When a participant is connected to multiple synchronizers the ledger API may
- * return them in any order. This helper ensures the global synchronizer is
- * always selected — regardless of position — by looking for the entry whose
- * alias is `'global'`. If no such entry exists (e.g. single-synchronizer
- * setups) the first entry is returned as the default.
- *
- * Pass the returned ID as the explicit `synchronizerId` on `ledger.prepare()`
- * and `ledger.internal.prepare()` calls that must route to the global
- * synchronizer.
- *
- * @param synchronizers - Raw array from `GET /v2/state/connected-synchronizers`.
- * @returns The `synchronizerId` of the entry aliased `'global'`, or the first
- *          entry's `synchronizerId` when no global alias is present.
- * @throws {Error} When the array is empty.
- */
-export function resolvePreferredSynchronizerId(
-    synchronizers: Array<{ synchronizerAlias: string; synchronizerId: string }>
-): string {
-    const preferred =
-        synchronizers.find((s) => s.synchronizerAlias === 'global') ??
-        synchronizers[0]
-    if (!preferred) throw new Error('No connected synchronizers found')
-    return preferred.synchronizerId
-}
-
-export type SynchronizerMap = {
-    globalSynchronizerId: string
-    appSynchronizerId: string
+export type ContractReadSpec = {
+    label: string
+    sdk: SDKInterface
+    templateIds: string[]
+    parties: string[]
 }
 
 /** Resolve a synchronizer ID to a logical role alias */
@@ -42,13 +20,6 @@ export function syncAlias(
     if (syncId === synchronizers.globalSynchronizerId) return 'global'
     if (syncId === synchronizers.appSynchronizerId) return 'app-synchronizer'
     throw new Error(`Unknown synchronizer ID ${syncId}`)
-}
-
-export type ContractReadSpec = {
-    label: string
-    sdk: SDKInterface
-    templateIds: string[]
-    parties: string[]
 }
 
 /**

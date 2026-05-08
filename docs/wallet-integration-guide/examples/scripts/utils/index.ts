@@ -9,17 +9,11 @@ import {
     AssetConfig,
 } from '@canton-network/wallet-sdk'
 
-export {
-    syncAlias,
-    logAllContracts,
-    resolvePreferredSynchronizerId,
-} from './synchronizer.js'
-export type {
-    SynchronizerMap,
-    ContractReadSpec as ContractSpec,
-} from './synchronizer.js'
-
+export { resolveGlobalSynchronizerId } from '@canton-network/wallet-sdk'
+export type { SynchronizerMap } from '@canton-network/wallet-sdk'
 export { vetDar } from './dar.js'
+export { syncAlias, logAllContracts } from './acs-logger.js'
+export type { ContractReadSpec as ContractSpec } from './acs-logger.js'
 export { ScanProxyClient, createScanProxyClient } from './scan-proxy.js'
 export type {
     ScanProxyContract,
