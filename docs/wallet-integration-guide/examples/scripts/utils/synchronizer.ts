@@ -44,7 +44,7 @@ export function syncAlias(
     throw new Error(`Unknown synchronizer ID ${syncId}`)
 }
 
-export type ContractSpec = {
+export type ContractReadSpec = {
     label: string
     sdk: SDKInterface
     templateIds: string[]
@@ -59,7 +59,7 @@ export type ContractSpec = {
 export async function logAllContracts(
     logger: Logger,
     synchronizers: SynchronizerMap,
-    specs: ContractSpec[]
+    specs: ContractReadSpec[]
 ): Promise<void> {
     const results = await Promise.all(
         specs.map(({ sdk, templateIds, parties }) =>

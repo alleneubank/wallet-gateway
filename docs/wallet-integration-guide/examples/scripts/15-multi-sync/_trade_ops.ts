@@ -27,7 +27,7 @@ const ALLOCATION_FACTORY_IFACE =
 const TRANSFER_FACTORY_IFACE =
     '#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferFactory'
 
-export function buildAllPartySpecs(setup: MultiSyncSetup): ContractSpec[] {
+export function buildContractReadSpec(setup: MultiSyncSetup): ContractSpec[] {
     const { p1Sdk, p2Sdk, p3Sdk, alice, bob, tradingApp } = setup
     return [
         {
@@ -323,7 +323,7 @@ export async function allocateAmuletForAlice(
             transferLegId: legId,
             transferLeg: requestView.transferLegs[legId],
         },
-        requestedAt: new Date(Date.now() - 60_000).toISOString(),
+        requestedAt: new Date().toISOString(),
         inputHoldingCids: [amuletHoldingCid],
         extraArgs: {
             context: { values: {} as Record<string, unknown> },

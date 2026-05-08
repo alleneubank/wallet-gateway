@@ -12,7 +12,7 @@ import {
     settleOtcTrade,
     reassignBobTokensToApp,
     aliceSelfTransferToApp,
-    buildAllPartySpecs,
+    buildContractReadSpec,
 } from './_trade_ops.js'
 
 // Multi-Synchronizer DvP: Alice pays 100 Amulet on global; Bob delivers 20 TestToken from app-sync.
@@ -29,7 +29,7 @@ const logger = pino({ name: 'v1-15-multi-sync-trade', level: 'info' })
 const setup = await setupMultiSyncTrade(logger)
 const { tokenP2, alice, bob, synchronizers, amuletAdmin } = setup
 
-const allPartySpecs = buildAllPartySpecs(setup)
+const allPartySpecs = buildContractReadSpec(setup)
 
 // ── Steps 5–6: Init holdings ────────────────────────────────────────────────
 // Step 5:  Mint Amulet for Alice (global synchronizer)
