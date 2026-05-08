@@ -23,10 +23,6 @@ const GENERATED_COMPOSE_OVERRIDE = path.join(
 )
 
 const CANTON_MAX_COMMANDS_IN_FLIGHT = 256
-const CUSTOM_APP_SYNCHRONIZER_SC = path.join(
-    rootDir,
-    'scripts/localnet/app-synchronizer.sc'
-)
 const LOCALNET_DARS_DIR = path.join(rootDir, '.localnet/dars')
 // TODO (#1721): make multi-sync the default and remove the flag once multi-sync is fully supported and tested in the main scripts e2e tests, but for now we want to keep it as an option to avoid accidentally running multi-sync e2e tests without updating the main scripts e2e tests to cover multi-sync as well
 function ensureComposeOverride() {
@@ -44,7 +40,6 @@ function ensureComposeOverride() {
         lines.push(
             '  multi-sync-startup:',
             '    volumes:',
-            `      - ${CUSTOM_APP_SYNCHRONIZER_SC}:/app/app-synchronizer.sc`,
             `      - ${LOCALNET_DARS_DIR}:/app/dars:ro`
         )
     }
