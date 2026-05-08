@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Logger } from 'pino'
+import { localNetStaticConfig } from '@canton-network/wallet-sdk'
 import type { ContractSpec } from '../utils/index.js'
 import type { MultiSyncSetup } from './_setup.js'
 
@@ -73,12 +74,13 @@ export async function mintAmuletForAlice(
     logger: Logger
 ): Promise<void> {
     const { p1Sdk, alice, globalSynchronizerId, scanProxy } = setup
-    const {
-        amuletRulesContract,
-        amuletRulesCid,
-        activeRoundContract,
-        openMiningRoundCid,
-    } = await scanProxy.fetchAmuletInfo()
+    const [amuletRulesContract, activeRoundContract] = await Promise.all([
+        scanProxy.getAmuletRules(),
+        scanProxy.getActiveOpenMiningRound(),
+    ])
+    if (!activeRoundContract) throw new Error('No active OpenMiningRound found')
+    const amuletRulesCid = amuletRulesContract.contract_id
+    const openMiningRoundCid = activeRoundContract.contract_id
 
     await p1Sdk.ledger
         .prepare({
@@ -290,14 +292,7 @@ export async function allocateAmuletForAlice(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<string> {
-    const {
-        p1Sdk,
-        tokenP1,
-        alice,
-        globalSynchronizerId,
-        scanProxy,
-        amuletAdmin,
-    } = setup
+    const { p1Sdk, tokenP1, alice, globalSynchronizerId, amuletAdmin } = setup
 
     const pendingRequests = await tokenP1.allocation.request.pending(
         alice.partyId
@@ -316,46 +311,30 @@ export async function allocateAmuletForAlice(
     const amuletHoldingCid = amuletHoldings[0]?.contractId
     if (!amuletHoldingCid) throw new Error('Amulet holding not found for Alice')
 
-    const allocationArgs = {
-        expectedAdmin: amuletAdmin,
-        allocation: {
-            settlement: requestView.settlement,
-            transferLegId: legId,
-            transferLeg: requestView.transferLegs[legId],
-        },
-        requestedAt: new Date().toISOString(),
-        inputHoldingCids: [amuletHoldingCid],
-        extraArgs: {
-            context: { values: {} as Record<string, unknown> },
-            meta: { values: {} },
-        },
-    }
-
-    const { factoryId, choiceContext } =
-        await scanProxy.fetchAllocationFactory(allocationArgs)
-    allocationArgs.extraArgs.context = {
-        ...(choiceContext.choiceContextData ?? {}),
-        values:
-            (choiceContext.choiceContextData?.values as Record<
-                string,
-                unknown
-            >) ?? {},
-    }
+    const [command, disclosedContracts] =
+        await tokenP1.allocation.instruction.create({
+            allocationSpecification: {
+                settlement: requestView.settlement,
+                transferLegId: legId,
+                transferLeg: requestView.transferLegs[legId],
+            },
+            asset: {
+                id: 'Amulet',
+                displayName: 'Amulet',
+                symbol: 'CC',
+                registryUrl:
+                    localNetStaticConfig.LOCALNET_REGISTRY_API_URL.href,
+                admin: amuletAdmin,
+            },
+            inputUtxos: [amuletHoldingCid],
+            requestedAt: new Date().toISOString(),
+        })
 
     await p1Sdk.ledger
         .prepare({
             partyId: alice.partyId,
-            commands: [
-                {
-                    ExerciseCommand: {
-                        templateId: ALLOCATION_FACTORY_IFACE,
-                        contractId: factoryId,
-                        choice: 'AllocationFactory_Allocate',
-                        choiceArgument: allocationArgs,
-                    },
-                },
-            ],
-            disclosedContracts: choiceContext.disclosedContracts ?? [],
+            commands: [command],
+            disclosedContracts,
             synchronizerId: globalSynchronizerId,
         })
         .sign(alice.keyPair.privateKey)
@@ -453,14 +432,7 @@ export async function settleOtcTrade(
     params: SettleParams,
     logger: Logger
 ): Promise<void> {
-    const {
-        p3Sdk,
-        tokenP1,
-        alice,
-        tradingApp,
-        globalSynchronizerId,
-        scanProxy,
-    } = setup
+    const { p3Sdk, tokenP1, alice, tradingApp, globalSynchronizerId } = setup
     const { otcTradeCid, legIdAlice, legIdBob, testTokenAllocationCid } = params
 
     const allocationsAlice = await tokenP1.allocation.pending(alice.partyId)
@@ -469,9 +441,10 @@ export async function settleOtcTrade(
     )
     if (!amuletAllocation) throw new Error('Amulet allocation not found')
 
-    const amuletExecCtx = await scanProxy.fetchExecuteTransferContext(
-        amuletAllocation.contractId
-    )
+    const amuletExecCtx = await tokenP1.allocation.context.execute({
+        allocationCid: amuletAllocation.contractId,
+        registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
+    })
 
     const allocationsWithContext = {
         [legIdAlice]: {
@@ -494,7 +467,7 @@ export async function settleOtcTrade(
         },
     }
 
-    // Amulet system contracts from scan proxy; synchronizerId='' → Canton infers from blob
+    // Amulet system contracts from registry; synchronizerId='' → Canton infers from blob
     const disclosedContracts = (amuletExecCtx.disclosedContracts ?? []).map(
         (c) => ({ ...c, synchronizerId: '' })
     )

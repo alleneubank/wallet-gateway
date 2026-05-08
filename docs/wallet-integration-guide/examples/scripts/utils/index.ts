@@ -14,14 +14,6 @@ export type { SynchronizerMap } from '@canton-network/wallet-sdk'
 export { vetDar } from './dar.js'
 export { syncAlias, logAllContracts } from './acs-logger.js'
 export type { ContractReadSpec as ContractSpec } from './acs-logger.js'
-export { ScanProxyClient, createScanProxyClient } from './scan-proxy.js'
-export type {
-    ScanProxyContract,
-    AmuletInfo,
-    ScanProxyChoiceContext,
-    AllocationFactoryResult,
-} from './scan-proxy.js'
-
 export function getActiveContractCid(entry: JSContractEntry) {
     if ('JsActiveContract' in entry) {
         return entry.JsActiveContract.createdEvent.contractId

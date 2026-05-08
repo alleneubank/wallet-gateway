@@ -14,12 +14,13 @@ import {
 } from '@canton-network/wallet-sdk'
 import type { KeyPair } from '@canton-network/core-signing-lib'
 import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
+import { ScanProxyClient } from '@canton-network/core-splice-client'
+import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     resolveGlobalSynchronizerId,
     vetDar,
-    createScanProxyClient,
 } from '../utils/index.js'
 import type { SynchronizerMap } from '../utils/index.js'
 import {
@@ -54,7 +55,7 @@ export interface MultiSyncSetup {
     globalSynchronizerId: string
     appSynchronizerId: string
     synchronizers: SynchronizerMap
-    scanProxy: Awaited<ReturnType<typeof createScanProxyClient>>
+    scanProxy: ScanProxyClient
     amuletAdmin: string
 }
 
@@ -225,12 +226,16 @@ export async function setupMultiSyncTrade(
     logger.info('Alice and Bob registered on app-synchronizer')
 
     // Connect scan proxy and discover Amulet admin
-    const scanProxy = await createScanProxyClient(
-        localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
-        TOKEN_PROVIDER_CONFIG_DEFAULT,
-        logger
+    const auth = new AuthTokenProvider(TOKEN_PROVIDER_CONFIG_DEFAULT, logger)
+    const scanProxy = new ScanProxyClient(
+        localNetStaticConfig.LOCALNET_APP_VALIDATOR_URL,
+        logger,
+        auth
     )
-    const { amuletAdmin } = await scanProxy.fetchAmuletInfo()
+    const amuletRules = await scanProxy.getAmuletRules()
+    const amuletAdmin = (amuletRules.payload as Record<string, unknown>)[
+        'dso'
+    ] as string
     logger.info(`Amulet asset discovered — admin: ${amuletAdmin}`)
 
     return {
